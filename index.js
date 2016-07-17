@@ -48,7 +48,7 @@ var Carousel = React.createClass({
       var childrenCount = this.props.children.length;
       return {
         contentOffset: {x: 0, y: 0},
-        currentPage: childrenCount > 1 ? 1 : 0,
+        currentPage: this.props.chosen == undefined ? 0 : this.props.chosen,
         chosen: this.props.chosen == undefined ? 0 : this.props.chosen,
         hasChildren: true,
         size: { width: 0, height: 0 }
@@ -70,25 +70,16 @@ var Carousel = React.createClass({
   },
   _onScrollEnd(event) {
     this._setUpTimer();
-
     var offset = Object.assign({}, event.nativeEvent.contentOffset);
-
-    var childrenCount = this.props.children.length,
-      size = this.state.size;
-    if (offset.x === 0) {
-      offset.x = childrenCount * size.width;
-    } else if (offset.x == (childrenCount+1)*size.width) {
-      offset.x = size.width;
-    }
-
-    this._calculateCurrentPage(offset.x);
-    this.setState({contentOffset: offset});
+    this.setState({
+      currentPage: Math.floor(offset.x / this.state.size.width),
+    });
   },
   _onLayout() {
     let self = this;
     this.refs.container.measure(function(x, y, w, h, px, py) {
       self.setState({
-        contentOffset: { x: w },
+        contentOffset: { x: w * self.state.currentPage },
         size: { width: w, height: h}
       });
     });
@@ -139,6 +130,7 @@ var Carousel = React.createClass({
   },
   render() {
     var pages = [],
+      bounces = false,
       contents,
       bullets,
       containerProps;
@@ -160,40 +152,17 @@ var Carousel = React.createClass({
     }
 
     var children = this.props.children;
-    //to make infinite pages structure like this is needed: 3-1-2-3-1
-    //add last one at the 1st place
-    if (children.length >= 1) {
-      pages.push(children[this.props.chosen == 0 ? children.length-1 : this.props.chosen-1]);
+    if (children.length > 1) {
+      bullets = children.map((child, i) =>{
+        return (
+          <TouchableWithoutFeedback onPress={() => this._animateToPage(i)} key={"bullet"+i}>
+            <View style={i == this.state.currentPage ? styles.chosenBullet : styles.bullet} />
+          </TouchableWithoutFeedback>)
+      });
+      bounces = true;
     }
 
-    //add all pages
-    if (this.props.chosen == 0){
-      for (let i=0; i<children.length; i++) {
-        pages.push(children[i]);
-      }
-    } else {
-      for (let i = this.props.chosen; i < children.length; i++ ){
-        pages.push(children[i]);
-      }
-      for (let i = 0; i < this.props.chosen; i++) {
-        pages.push(children[i]);
-      }
-    }
-
-    //add first one at the last place
-    if (children.length >= 1) {
-      pages.push(children[this.props.chosen]);
-    }
-
-    bullets = children.map((child, i) =>{
-      let currentPage = this.state.currentPage == children.length ? 0 : this.state.currentPage;
-      return (
-        <TouchableWithoutFeedback onPress={() => this._animateToPage(i)} key={"bullet"+i}>
-          <View style={i == currentPage ? styles.chosenBullet : styles.bullet} />
-        </TouchableWithoutFeedback>)
-    });
-
-    pages = pages.map((page, i) =>
+    pages = children.map((page, i) =>
         <View style={[{width: size.width, height: size.height}, this.props.pageStyle]} key={"page"+i}>
           {page}
         </View>
@@ -204,21 +173,21 @@ var Carousel = React.createClass({
         ref='scrollView'
         onScrollBeginDrag={this._onScrollBegin}
         onMomentumScrollEnd={this._onScrollEnd}
-        alwaysBounceHorizontal={false}
+        alwaysBounceHorizontal={bounces}
         alwaysBounceVertical={false}
         contentInset={{top:0}}
         automaticallyAdjustContentInsets={false}
         showsHorizontalScrollIndicator={false}
         horizontal={true}
         pagingEnabled={true}
-        bounces={false}
+        bounces={bounces}
         contentOffset={this.state.contentOffset}
         contentContainerStyle={[
           styles.horizontalScroll,
           this.props.contentContainerStyle,
           {
-            width: size.width*(this.props.children.length+(this.props.children.length>1?2:0)),
-            height: size.height
+            width: size.width * this.props.children.length,
+            height: size.height,
           }
         ]}
       >
@@ -230,7 +199,6 @@ var Carousel = React.createClass({
           <View style={styles.container}>
             {bullets}
           </View>
-          {this.props.pageInfo && this._renderPageInfo(children.length)}
         </View>
       );
   },
@@ -274,20 +242,18 @@ var styles = StyleSheet.create({
     flexDirection: 'row'
   },
   chosenBullet: {
-    marginLeft: 20,
-    width: 10,
-    height: 10,
-    borderRadius: 20,
+    marginLeft: 10,
+    width: 5,
+    height: 5,
+    borderRadius: 10,
     backgroundColor: 'white'
   },
   bullet: {
-    marginLeft: 20,
-    width: 10,
-    height: 10,
-    borderRadius: 20,
-    backgroundColor: 'transparent',
-    borderColor: 'white',
-    borderWidth: 1
+    marginLeft: 10,
+    width: 5,
+    height: 5,
+    borderRadius: 10,
+    backgroundColor: 'grey',
   }
 });
 
