@@ -234,7 +234,7 @@ var styles = StyleSheet.create({
     position:'absolute',
     left:0,
     right:0,
-    bottom:10,
+    bottom:30,
     height:30,
     backgroundColor: 'transparent',
     alignItems: 'center',
@@ -242,17 +242,17 @@ var styles = StyleSheet.create({
     flexDirection: 'row'
   },
   chosenBullet: {
-    marginLeft: 10,
-    width: 5,
-    height: 5,
-    borderRadius: 10,
+    marginLeft: 16,
+    width: 16,
+    height: 16,
+    borderRadius: 16,
     backgroundColor: 'white'
   },
   bullet: {
-    marginLeft: 10,
-    width: 5,
-    height: 5,
-    borderRadius: 10,
+    marginLeft: 16,
+    width: 16,
+    height: 16,
+    borderRadius: 16,
     backgroundColor: 'grey',
   }
 });
